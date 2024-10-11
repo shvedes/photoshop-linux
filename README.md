@@ -6,18 +6,19 @@ By providing this software, I do not give any guarantees of its work. This scrip
 
 ## Showcase 
 
-![image](https://github.com/user-attachments/assets/715d7b83-d872-4e68-983e-daa6704e79ab)
+![image](https://github.com/user-attachments/assets/5f4edc77-a67e-49c5-8332-b436f1d6134d)
 ![image](https://github.com/user-attachments/assets/ad8c7477-4682-4edc-8665-4f5b5380a382)
 
 ### What works
 
 - Drag and drop
-- Mime type (right click menu, see [here](https://github.com/user-attachments/assets/eb5f7ab3-fb75-47e7-841b-a763ca5e3382))
+- Clipboard image pasting
+- Mime type association (right click menu, see [here](https://github.com/user-attachments/assets/eb5f7ab3-fb75-47e7-841b-a763ca5e3382))
 - GPU acceleration
 
 **Tested on:**
 - Arch Linux
-- KDE Plasma 6.1.5 (Wayland)
+- KDE Plasma 6.2 (Wayland)
 - wine 9.19
 - AMD GPU
 
@@ -26,15 +27,27 @@ By providing this software, I do not give any guarantees of its work. This scrip
 - When hovering on toolbar item to see its instructions, black bars may appear around
 - Wine's experimental wayland driver is completely broken
 
-## Installation
+### Notes
+
+- [ ] If you have **Papirus Icons** installed, the script will use an icon that is already in that pack. If not, the script will download an icon from the internet and use it for the `.desktop` entry.
+
+## Usage
 
 ```bash
-git clone https://github.com/shvedes/photoshop-linux
-cd photoshop-linux
-./install.sh <installation path>
+./install.sh
+Usage: ./install.sh [options...] <path>
+-a    Use already existing Photoshop.tar.xz
+-i    Install Photoshop
+-h    Show this help
 ```
 ## To Do
 
+- [ ] Properly implement logging
+- [ ] Multi distro dependencies installer (for now only Arch Linux is supported)
+- [ ] Create universal functions for repetitive actions
+- [ ] Implement colored logging in a different way, making the code more readable
+- [ ] Allow the user to use a different source to download Photoshop
+    - [ ] Allow the user to skip checksum verification of downloaded files
 - [ ] Uninstall script
-- [ ] More checks in the install script
-- [ ] Ability for the user to select a default installation folder
+- [x] More checks in the install script
+- [x] Ability for the user to select a default installation folder

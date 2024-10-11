@@ -1,3 +1,4 @@
 uninstall.sh
 install.sh.bak
+install_log.log
 *.tar.xz
