@@ -29,7 +29,7 @@ By providing this software, I do not give any guarantees of its work. This scrip
 
 ### Notes
 
-- [ ] If you have **Papirus Icons** installed, the script will use an icon that is already in that pack. If not, the script will download an icon from the internet and use it for the `.desktop` entry.
+- If you have **Papirus Icons** installed, the script will use an icon that is already in that pack. If not, the script will download an icon from the internet and use it for the `.desktop` entry.
 
 ## Usage
 
