@@ -45,7 +45,7 @@ Usage: ./install.sh [options...] <path>
 - [ ] Properly implement logging
 - [ ] Multi distro dependencies installer (for now only Arch Linux is supported)
 - [ ] Create universal functions for repetitive actions
-- [ ] Implement colored logging in a different way, making the code more readable
+- [x] Implement colored logging in a different way, making the code more readable
 - [ ] Allow the user to use a different source to download Photoshop
     - [ ] Allow the user to skip checksum verification of downloaded files
 - [ ] Uninstall script
