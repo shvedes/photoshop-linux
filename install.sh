@@ -46,6 +46,9 @@ LAUNCHER="$HOME/.local/bin/photoshop.sh"
 LOCAL_ARCHIVE=""
 ICON=""
 
+# Identifier of current OS
+OS_ID=$(./get-os-id.sh)
+
 trap on_interrupt SIGINT
 
 on_interrupt() {
@@ -88,12 +91,18 @@ get_help() {
 
 # soon
 print_error() {
-	command ...
+	local message=$1
+	echo -e "${ERORR} ${message}" >&2
+}
+
+print_log() {
+	local message=$1
+	echo -e "${LOG} ${message}"
 }
 
 print_warn() {
 	local message=$1
-	echo "${WARNING} ${message}" >&2
+	echo -e "${WARNING} ${message}" >&2
 }
 
 # Not used yet
@@ -145,47 +154,35 @@ check_deps() {
 }
 
 install_deps() {
-	local os="$(uname -n)"
+	local can_use_sudo
+	can_use_sudo=$(ask_user "Script will use ${RED}sudo${RESET}, do you want to continue?")
 
-	case "$os" in
-	"archlinux")
+	if [[ "${can_use_sudo}" != 0 ]]; then
+		print_log "Exiting"
+		exit 0
+	fi
+
+	case "$OS_ID" in
+	"arch")
 		# To display the list of packages correctly, we need to format the string.
 		# Otherwise `read` will not display the whole list of packages and will stop in the middle of the line.
 		missing_packages_str=$(printf "%s " "${missed_packages[@]}")
 		# Here we can do without it, but in that case there will be an annoying space before the period at the end of the package listing.
 		missing_packages_str=${missing_packages_str% }
 
-		while true; do
-			# Yeah yeah, I know it's unreadable.
-			# But it's beautiful!
-			read -p "$(echo -e "$YELLOW")[WARNING]$(echo -e "$RESET") Script will execute: '$(echo -e "$RED")sudo$(echo -e "$RED") $(echo -e "$BLUE")pacman -S $(echo -e "$YELLOW")${missing_packages_str}$(echo -e "$RESET")'. Proceed? (yes/no): " answer
+		echo -e "$LOG Installing missing dependencies"
+		if ! sudo pacman -S "${missed_packages[@]}"; then
+			print_error "Pacman terminated with an error."
+			exit 1
+		fi
 
-			case "$answer" in
-			[Yy]es | y)
-				echo -e "$LOG Installing missing dependencies"
-				if ! sudo pacman -S "${missed_packages[@]}"; then
-					echo -e "$ERROR Pacman terminated with an error."
-					exit 1
-				fi
-
-				echo -e "$LOG Missing dependencies was installed"
-				break
-				;;
-			[Nn]o | n)
-				echo -e "$LOG Exiting"
-				exit 1
-				;;
-			*)
-				echo -e "$WARNING Invalid input!"
-				;;
-			esac
-		done
 		;;
 	*)
 		echo -e "$ERROR For now only ${BLUE}Arch Linux${RESET} is supported."
 		exit 1
 		;;
 	esac
+	echo -e "$LOG Missing dependencies was installed"
 }
 
 #							MAIN SCRIPT
@@ -239,10 +236,11 @@ setup_wine() {
 		echo -e "$ERROR Please open an issue by mentioning the contents of ${YELLOW}./install_log.log${RESET}."
 		exit 1
 	fi
-
-	echo "---------------------------------------------------------------------" >>./install_log.log
-	echo "                  Downloading Visual C++ Libraries				   " >>./install_log.log
-	echo "---------------------------------------------------------------------" >>./install_log.log
+	{
+		echo "---------------------------------------------------------------------"
+		echo "                  Downloading Visual C++ Libraries"
+		echo "---------------------------------------------------------------------"
+	} >>./install_log.log
 
 	echo -e "$LOG Downloading and installing Visual C++ libraries."
 	if ! winetricks --unattended "${vc_libraries[@]}" &>>./install_log.log; then
