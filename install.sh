@@ -49,44 +49,41 @@ ICON=""
 # Identifier of current OS
 OS_ID=$(./get-os-id.sh)
 
+SKIP_CHECKSUM=0
+
 trap on_interrupt SIGINT
 
 on_interrupt() {
 	trap "exit 1" SIGINT
 
-	echo -e "\n$WARNING User intrrupt!"
+	print_warn "User intrrupt!"
 
-	if [ -d "$INSTALL_PATH" ]; then
-		while true; do
-			read -p "$(echo -e "$YELLOW")[WARNING]$(echo -e "$RESET") Do you want to $(echo -e "$RED")delete$(echo -e "$RESET") the just created wine prefix? (yes/no): " answer
-
-			case "$answer" in
-			[Yy]es | y)
-				if rm -rf "${INSTALL_PATH:?}"; then
-					exit 0
-				else
-					echo -e "$ERORR The last command ended with an error."
-					exit 1
-				fi
-				;;
-			[Nn]o | n)
-				exit 0
-				;;
-			*)
-				echo -e "$WARNING Invalid input!"
-				;;
-			esac
-		done
-	else
+	if ! [ -d "$INSTALL_PATH" ]; then
 		exit 1
 	fi
+
+	local delete_prefix
+	delete_prefix=$(ask_user "Do you want to ${RED}delete${RESET} the just created wine prefix ('${INSTALL_PATH}')?")
+
+	if [[ "${delete_prefix}" != 0 ]]; then
+		print_log "Deleting wine prefix '${INSTALL_PATH}'"
+		if ! rm -rf "${INSTALL_PATH:?}"; then
+			print_err "The last command ended with an error."
+			exit 1
+		fi
+	fi
+
+	exit 0
 }
 
 get_help() {
-	echo "Usage: ./install.sh [options...] <absolute path>"
-	echo "  -a    Use already existing Photoshop.tar.xz"
-	echo "  -i    Install Photoshop"
-	echo "  -h    Show this help"
+	echo "Usage:"
+	echo "  ./install.sh [options...] <absolute path>"
+	echo "Options:"
+	echo "  -a          Use already existing Photoshop.tar.xz"
+	echo "  -i          Install Photoshop"
+	echo "  -s          Skip checksums validation"
+	echo "  -h, --help  Show this help"
 }
 
 # soon
@@ -190,33 +187,23 @@ install_deps() {
 #
 
 is_path_exists() {
-	if [ -d "$1" ]; then
-		# BUG
-		# echo -e "$WARNING The specified path '$1' already exists."
-		echo -e "$WARNING The specified path already exists."
+	if ! [ -d "$1" ]; then
+		return
+	fi
+	# BUG
+	# echo -e "$WARNING The specified path '$1' already exists."
+	print_warn "The specified path already exists."
 
-		while true; do
-			read -p "$(echo -e "$YELLOW")[WARNING]$(echo -e "$RESET") Do you want to $(echo -e "$RED")delete$(echo -e "$RESET") previous installation? (yes/no): " answer
+	local delete_installation
+	delete_installation=$(ask_user "Do you want to ${RED}delete${RESET} previous installation?")
 
-			case "$answer" in
-			[Yy]es | y)
-				if rm -rf "${1:?}"; then
-					echo -e "$LOG Deleted old installation."
-					break
-				else
-					echo -e "$ERROR Something went wrong."
-					exit 1
-				fi
-				;;
-			[Nn]o | n)
-				echo -e "$LOG Exiting."
-				exit 1
-				;;
-			*)
-				echo -e "$WARNING Invalid input!"
-				;;
-			esac
-		done
+	if [[ "${delete_installation}" == 0 ]]; then
+		if rm -rf "${1:?}"; then
+			print_log "Deleted old installation."
+		else
+			print_error "Something went wrong."
+			exit 1
+		fi
 	fi
 }
 
@@ -224,16 +211,16 @@ setup_wine() {
 	export WINEPREFIX="$INSTALL_PATH"
 	local vc_libraries=("vcrun2003" "vcrun2005" "vcrun2010" "vcrun2012" "vcrun2013" "vcrun2022")
 
-	echo -e "$LOG Setting up wine prefix."
+	print_log "Setting up wine prefix."
 	winecfg /v win10 2>/dev/null
 
 	# echo -e "${LOG_NORMAL}[LOG]${LOG_RESET} Executing winetricks. All winetricks logs are saved in ${LOG_WARNING}./winetricks.log${LOG_RESET}."
-	echo -e "$LOG Executing winetricks."
-	echo -e "$LOG Downloading and installing core components for wine prefix. This could take some time."
+	print_log "Executing winetricks."
+	print_log "Downloading and installing core components for wine prefix. This could take some time."
 
 	if ! winetricks --unattended corefonts win10 vkd3d dxvk2030 msxml3 msxml6 gdiplus &>./install_log.log; then
-		echo -e "$ERORR Winetricks terminated with an error."
-		echo -e "$ERROR Please open an issue by mentioning the contents of ${YELLOW}./install_log.log${RESET}."
+		print_error "Winetricks terminated with an error."
+		print_error "Please open an issue by mentioning the contents of ${YELLOW}./install_log.log${RESET}."
 		exit 1
 	fi
 	{
@@ -242,11 +229,25 @@ setup_wine() {
 		echo "---------------------------------------------------------------------"
 	} >>./install_log.log
 
-	echo -e "$LOG Downloading and installing Visual C++ libraries."
+	print_log "Downloading and installing Visual C++ libraries."
 	if ! winetricks --unattended "${vc_libraries[@]}" &>>./install_log.log; then
-		echo -e "$ERROR Winetricks terminated with an error. Please, refer to ${YELLOW}install_log.log${RESET} for more info."
+		print_error "Winetricks terminated with an error. Please, refer to ${YELLOW}install_log.log${RESET} for more info."
 		# echo -e "${LOG_ERROR}[ERROR]${LOG_RESET} Please open an issue by mentioning the contents of ${LOG_WARNING}./install_log.log${LOG_RESET}."
-		echo -e "$ERROR If you can't solve the issue yourself, please, open an issue on the GitHub."
+		print_error "If you can't solve the issue yourself, please, open an issue on the GitHub."
+		exit 1
+	fi
+}
+
+validate_checksum() {
+	local checksum=$1
+	local file=$2
+
+	if [[ "${SKIP_CHECKSUM}" != 0 ]]; then
+		return
+	fi
+
+	if ! echo "${checksum} ${file}" | checksum --check --status; then
+		print_error "Checksums don't match"
 		exit 1
 	fi
 }
@@ -254,9 +255,9 @@ setup_wine() {
 download_photoshop() {
 	local archive_name="Photoshop.tar.xz"
 
-	if [ -f "$archive_name" ]; then
-		echo -e "$LOG Found existing archive."
-		echo -e "$LOG Comparing checksums."
+	if [ -f "${archive_name}" ]; then
+		print_log "Found existing archive."
+		print_log "Comparing checksums."
 		# TODO:
 		# separate function to avoid repeating this task
 		local local_checksum
@@ -441,18 +442,16 @@ install_desktop_entry() {
 
 	local path="$XDG_DATA_HOME/applications/photoshop.desktop"
 
-	echo -e "$LOG Genarating application menu item"
+	print_log "Genarating application menu item"
 
 	cp ./photoshop.desktop "${path}"
 }
 
 install_launcher() {
 
-	if [ ! -d "$HOME/.local/bin" ]; then
-		mkdir "$HOME/.local/bin"
-	fi
+	mkdir -p "$HOME/.local/bin"
 
-	echo -e "$LOG Installing launcher."
+	print_log "Installing launcher."
 	{
 		echo "#!/usr/bin/env bash"
 		echo " "
@@ -492,16 +491,33 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 
-while getopts "a:i:h" flag; do
+while getopts "a:i:hs-:" flag; do
 	case $flag in
 	a)
 		LOCAL_ARCHIVE="$OPTARG"
 		;;
 	h)
 		get_help
+		exit 0
 		;;
 	i)
 		INSTALL_PATH="$OPTARG"
+		;;
+	s)
+		print_log "Skip checksums validation enabled"
+		SKIP_CHECKSUM=1
+		;;
+	-)
+		case "${OPTARG}" in
+		help)
+			get_help
+			exit 0
+			;;
+		*)
+			echo "Invalid option: -$OPTARG Use -h for help."
+			exit 1
+			;;
+		esac
 		;;
 	\?)
 		echo "Invalid option: -$OPTARG Use -h for help."
