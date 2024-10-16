@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Photoshop
+Type=Application
+Terminal=false
+Comment=The industry-standard photo editing software (Wine)
+Categories=Graphics
+MimeType=image/psd;image/x-psd;image/png;image/jpg;image/jpeg;image/webp;image/heif;image/raw
+StartupWMClass=photoshop.exe
