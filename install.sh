@@ -224,17 +224,7 @@ setup_wine() {
 	print_log "Executing winetricks."
 	print_log "Downloading and installing core components for wine prefix. This could take some time."
 
-  local winetricks_args
-  case "${OS_ID}" in
-    redos)
-      winetricks_args=(corefonts win10 vkd3d msxml3 msxml6 gdiplus)
-      ;;
-    *)
-      winetricks_args=(corefonts win10 vkd3d dxvk2030 msxml3 msxml6 gdiplus)
-      ;;
-  esac
-
-	if ! winetricks --unattended "${winetricks_args[@]}"  &>./install_log.log; then
+	if ! winetricks --unattended  corefonts win10 vkd3d dxvk2030 msxml3 msxml6 gdiplus &>./install_log.log; then
 		print_error "Winetricks terminated with an error."
 		print_error "Please open an issue by mentioning the contents of ${YELLOW}./install_log.log${RESET}."
 		exit 1
