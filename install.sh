@@ -143,9 +143,10 @@ redos)
 	DEPENDENCIES=(
 		curl
 		wine
-		winetricks
-		ImageMagick
+    ImageMagick
 		zstd
+    git
+    make
 	)
 	;;
 *)
@@ -178,6 +179,10 @@ install_deps() {
 			print_error "DNF terminated with an error"
 			exit 1
 		fi
+
+    if ! ./install-winetricks.sh ; then
+      print_error "Error while installing winetricks"
+    fi
 		;;
 	*)
 		print_error "For now only ${BLUE}Arch Linux${RESET} and ${RED}RED OS${RESET} is supported."
