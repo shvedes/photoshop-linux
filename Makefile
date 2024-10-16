@@ -1,7 +1,9 @@
+SOURCE_FILES := $(shell shfmt -f .)
+
 check:
 	desktop-file-validate ./photoshop.desktop
-	shellcheck ./install.sh
+	shellcheck -x $(SOURCE_FILES)
 
 fmt:
-	shfmt -w .
+	shfmt -w $(SOURCE_FILES)
 
