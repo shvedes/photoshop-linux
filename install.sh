@@ -108,7 +108,7 @@ print_warn() {
 # Not used yet
 ask_user() {
 	local message=$1
-	echo -e "${WARNING} ${message}"
+	print_warn "${message}"
 	while true; do
 		read -p "([Y]es/[N]o): " answer
 
@@ -127,62 +127,62 @@ ask_user() {
 	done
 }
 
-# Imagemagick is needed in case you are not using Papirus Icons.
-# One of the functions will load a Photoshop `.webp` icon and convert it to `.png`. The `.png` file will be used in the `.desktop` entry.
-check_deps() {
-	declare -A packages=(
-		["curl"]="curl"
-		["wine"]="wine"
-		["winetricks"]="winetricks"
-		["magick"]="imagemagick"
+export DEPENDENCIES
+case "${OS_ID}" in
+arch)
+	DEPENDENCIES=(
+		curl
+		wine
+		winetricks
+		imagemagik
 	)
-
-	missed_packages=()
-
-	for bin in "${!packages[@]}"; do
-		if ! command -v "$bin" >/dev/null; then
-			missed_packages+=("${packages[$bin]}")
-		fi
-	done
-
-	if [ ${#missed_packages[@]} -eq 0 ]; then
-		echo -e "$CHECK All dependencies are installed."
-	else
-		echo -e "$WARNING Missing dependencies: ${YELLOW}${missed_packages[*]}${RESET}."
-		return 1
-	fi
-}
+	;;
+redos)
+	DEPENDENCIES=(
+		curl
+		wine
+		winetricks
+		ImageMagick
+		zstd
+	)
+	;;
+*)
+	print_error "Unsupported OS"
+	exit 1
+	;;
+esac
 
 install_deps() {
 	local can_use_sudo
 	can_use_sudo=$(ask_user "Script will use ${RED}sudo${RESET}, do you want to continue?")
 
-	if [[ "${can_use_sudo}" != 0 ]]; then
-		print_log "Exiting"
+	if [[ "${can_use_sudo}" == 0 ]]; then
+		print_log "Exiting..."
 		exit 0
 	fi
 
+	print_log "Installing missing dependencies"
 	case "$OS_ID" in
-	"arch")
-		# To display the list of packages correctly, we need to format the string.
-		# Otherwise `read` will not display the whole list of packages and will stop in the middle of the line.
-		missing_packages_str=$(printf "%s " "${missed_packages[@]}")
-		# Here we can do without it, but in that case there will be an annoying space before the period at the end of the package listing.
-		missing_packages_str=${missing_packages_str% }
-
-		echo -e "$LOG Installing missing dependencies"
-		if ! sudo pacman -S "${missed_packages[@]}"; then
+	arch)
+		if ! sudo pacman -S "${DEPENDENCIES[@]}"; then
 			print_error "Pacman terminated with an error."
 			exit 1
 		fi
 
 		;;
+	redos)
+
+		if ! sudo dnf install -y "${DEPENDENCIES[@]}" --comment "Installed from photoshop-linux script"; then
+			print_error "DNF terminated with an error"
+			exit 1
+		fi
+		;;
 	*)
-		echo -e "$ERROR For now only ${BLUE}Arch Linux${RESET} is supported."
+		print_error "For now only ${BLUE}Arch Linux${RESET} and ${RED}RED OS${RESET} is supported."
 		exit 1
 		;;
 	esac
-	echo -e "$LOG Missing dependencies was installed"
+	print_log "Missing dependencies was installed"
 }
 
 #							MAIN SCRIPT
@@ -467,9 +467,7 @@ install_launcher() {
 }
 
 main() {
-	if ! check_deps; then
-		install_deps
-	fi
+	install_deps
 
 	verify_path "$INSTALL_PATH"
 	is_path_exists "$INSTALL_PATH"
