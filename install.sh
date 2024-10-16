@@ -288,7 +288,7 @@ download_photoshop() {
 	fi
 	# echo -e "${LOG_NORMAL}[LOG]${LOG_RESET} Downloading Photoshop (1.1G). Using ${LOG_WARNING}curl${LOG_RESET} as backend. Logs are available in ${LOG_WARNING}./curl.log${LOG_RESET}."
 	print_log "Downloading Photoshop (1.1G)."
-	if ! curl "$PHOTOSHOP_URL" -o "$archive_name" &>>./install_log.log; then
+	if ! curl --progress-bar "$PHOTOSHOP_URL" -o "$archive_name"; then
 		# TODO:
 		# separate function to avoid repeating
 		print_error "An error occurred during the download. Please, refer to ${YELLOW}install_log.log${RESET} for more info."
@@ -447,11 +447,9 @@ install_icon() {
 
 install_desktop_entry() {
 	mkdir "$XDG_DATA_HOME/applications" -p
-
-
 	print_log "Genarating application menu item"
-
 	cp ./photoshop.desktop "${INSTALLED_DESKTOP_FILE}"
+  echo "Exec=bash $HOME/.local/bin/photoshop.sh %F" >> "${INSTALLED_DESKTOP_FILE}"
 }
 
 install_launcher() {
