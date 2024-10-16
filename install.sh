@@ -102,6 +102,11 @@ print_warn() {
 	echo -e "${WARNING} ${message}" >&2
 }
 
+print_check() {
+	local message=$1
+	echo -e "${CHECK} ${message}"
+}
+
 # Not used yet
 ask_user() {
 	local message=$1
@@ -197,7 +202,8 @@ is_path_exists() {
 	local delete_installation
 	delete_installation=$(ask_user "Do you want to ${RED}delete${RESET} previous installation?")
 
-	if [[ "${delete_installation}" == 0 ]]; then
+  # TODO: Need to test, this seems doesn't work
+	if [[ "${delete_installation}" != 0 ]]; then
 		if rm -rf "${1:?}"; then
 			print_log "Deleted old installation."
 		else
@@ -218,7 +224,17 @@ setup_wine() {
 	print_log "Executing winetricks."
 	print_log "Downloading and installing core components for wine prefix. This could take some time."
 
-	if ! winetricks --unattended corefonts win10 vkd3d dxvk2030 msxml3 msxml6 gdiplus &>./install_log.log; then
+  local winetricks_args
+  case "${OS_ID}" in
+    redos)
+      winetricks_args=(corefonts win10 vkd3d msxml3 msxml6 gdiplus)
+      ;;
+    *)
+      winetricks_args=(corefonts win10 vkd3d dxvk2030 msxml3 msxml6 gdiplus)
+      ;;
+  esac
+
+	if ! winetricks --unattended "${winetricks_args[@]}"  &>./install_log.log; then
 		print_error "Winetricks terminated with an error."
 		print_error "Please open an issue by mentioning the contents of ${YELLOW}./install_log.log${RESET}."
 		exit 1
@@ -243,13 +259,17 @@ validate_checksum() {
 	local file=$2
 
 	if [[ "${SKIP_CHECKSUM}" != 0 ]]; then
-		return
+		return 0
+	fi
+	echo -e "$LOG Comparing checksum of file '${file}' with checksum '${checksum}'"
+
+	if ! echo "${checksum} ${file}" | sha256sum --check --status; then
+		print_error "Checksums don't match"
+    return 1
 	fi
 
-	if ! echo "${checksum} ${file}" | checksum --check --status; then
-		print_error "Checksums don't match"
-		exit 1
-	fi
+  print_check "Checksums for '${file}' are valid"
+  return 0
 }
 
 download_photoshop() {
@@ -257,41 +277,33 @@ download_photoshop() {
 
 	if [ -f "${archive_name}" ]; then
 		print_log "Found existing archive."
-		print_log "Comparing checksums."
 		# TODO:
 		# separate function to avoid repeating this task
-		local local_checksum
-		local_checksum="$(sha256sum "$archive_name" | awk '{print  $1}')"
-
-		if [[ "$CHECKSUM" != "$local_checksum" ]]; then
-			echo -e "$LOG Checksums don't match!"
-			echo -e "$LOG Deleting corrupted archive."
+    if ! validate_checksum "${CHECKSUM}" "${archive_name}"; then 
+			print_log "Deleting corrupted archive."
 			rm -v "${archive_name:?}" &>>./install_log.log
 		fi
 
 		return 0
 	fi
 	# echo -e "${LOG_NORMAL}[LOG]${LOG_RESET} Downloading Photoshop (1.1G). Using ${LOG_WARNING}curl${LOG_RESET} as backend. Logs are available in ${LOG_WARNING}./curl.log${LOG_RESET}."
-	echo -e "$LOG Downloading Photoshop (1.1G)."
+	print_log "Downloading Photoshop (1.1G)."
 	if ! curl "$PHOTOSHOP_URL" -o "$archive_name" &>>./install_log.log; then
 		# TODO:
 		# separate function to avoid repeating
-		echo -e "$ERROR An error occurred during the download. Please, refer to ${YELLOW}install_log.log${RESET} for more info."
-		echo -e "$ERROR If you can't solve the issue yourself, please, open an issue on the GitHub."
+		print_error "An error occurred during the download. Please, refer to ${YELLOW}install_log.log${RESET} for more info."
+		print_error "If you can't solve the issue yourself, please, open an issue on the GitHub."
 		exit 1
 	fi
 
-	echo -e "$LOG Photoshop Downloaded."
+	print_log "Photoshop Downloaded."
 
 	# TODO:
 	# A separate function so you don't have to write this code multiple times
-	echo -e "$LOG Comparing checksums."
-	local local_checksum
-	local_checksum="$(sha256sum "$archive_name" | awk '{print  $1}')"
 
-	if [[ "$CHECKSUM" != "$local_checksum" ]]; then
-		echo -e "$ERROR Checksums don't match!"
+	if ! validate_checksum "${CHECKSUM}" "${archive_name}"; then
 		exit 1
+  fi
 
 	# TODO
 	# 	while true; do
@@ -305,7 +317,6 @@ download_photoshop() {
 	# 				;;
 	# 		esac
 	# 	done
-	fi
 }
 
 verify_path() {
@@ -314,7 +325,7 @@ verify_path() {
 	# Check the validity of the path if the user has specified the absolute path manually. This is necessary in case the user accidentally misspells $HOME paths.
 	# https://github.com/shvedes/photoshop-linux/issues/1
 	if [[ ! "$path" =~ $HOME ]]; then
-		echo -e "$ERROR Cannot validade ${YELLOW}\$HOME${RESET} path."
+		print_error "Cannot validade ${YELLOW}\$HOME${RESET} path."
 		exit 1
 	fi
 
@@ -323,16 +334,17 @@ verify_path() {
 	INSTALL_PATH="$path"
 
 	# Remove the last folder from the given path (as it will be created by wineprefix) and check the remaining path for validity.
-	local reformatted_path="$(echo "$path" | sed 's/\/[^\/]*$//')"
+	local reformatted_path
+  reformatted_path="$(echo "$path" | sed 's/\/[^\/]*$//')"
 
 	if [ -d "$reformatted_path" ]; then
 		if [[ "$reformatted_path" == "$HOME" ]]; then
 			return 0
 		else
-			echo -e "$CHECK Directory $reformatted_path exist."
+			print_check "Directory '${reformatted_path}' exist."
 		fi
 	else
-		echo -e "$ERORR Path $reformatted_path does not exist!"
+		print_error "Path '${reformatted_path}' does not exist!"
 		exit 1
 	fi
 }
@@ -344,9 +356,9 @@ install_photoshop() {
 		# echo -e "${LOG_NORMAL}[LOG]${LOG_RESET} Installing Photoshop."
 		local filename="Photoshop.tar.xz"
 
-		echo -e "$LOG Extracting Photoshop."
+		print_log "Extracting Photoshop."
 		if ! tar xvf "$filename" &>>./install_log.log; then
-			echo -e "$ERORR An error occurred while unpacking the archive."
+			print_error "An error occurred while unpacking the archive."
 			exit 1
 			# TODO:
 			# A separate function so you don't have to write this code multiple times
@@ -356,37 +368,28 @@ install_photoshop() {
 			# done
 		fi
 
-		echo -e "$LOG Installing Photoshop."
+		print_log "Installing Photoshop."
 		if ! mv "./Adobe Photoshop 2021" "$INSTALL_PATH/drive_c/Program Files"; then
-			echo -e "$ERROR An error occurred during installation."
+			print_error "An error occurred during installation."
 			exit 1
 		fi
 	else
-		echo -e "$LOG Using local Photoshop archive."
+		print_log "Using local Photoshop archive."
 
 		if [[ ! "$LOCAL_ARCHIVE" = *.tar.xz ]]; then
-			echo -e "$ERORR Only tar.xz is accepted for now."
+			print_error "Only tar.xz is accepted for now."
 			exit 1
 			# TODO:
 			# Allow user to use not only tar.xz / archive from another sources
 		fi
 
-		# TODO:
-		# A separate function so you don't have to write this code multiple times
-		echo -e "$LOG Comparing checksums."
-
-		local local_checksum="$(sha256sum "$LOCAL_ARCHIVE" | awk '{print  $1}')"
-
-		# TODO:
-		# Allow user to skip checksum comparing
-		if [[ "$CHECKSUM" != "$local_checksum" ]]; then
-			echo -e "$ERROR Checksums don't match!"
+		if validate_checksum "${CHECKSUM}" "${LOCAL_ARCHIVE}"; then
 			exit 1
 		fi
 
-		echo -e "$LOG Extracting Photoshop."
+		print_log "Extracting Photoshop."
 		if ! tar xvf "$LOCAL_ARCHIVE" &>>./install_log.log; then
-			echo -e "$ERROR An error occurred while unpacking the archive."
+			print_error "An error occurred while unpacking the archive."
 			exit 1
 			# TODO:
 			# A separate function so you don't have to write this code multiple times
@@ -396,15 +399,16 @@ install_photoshop() {
 			# done
 		fi
 
-		echo -e "$LOG Installing Photoshop."
+		print_log "Installing Photoshop."
 		if ! mv "./Adobe Photoshop 2021" "$INSTALL_PATH/drive_c/Program Files"; then
-			echo -e "$ERROR An error occurred during installation. Please, refer to ${YELLOW}install_log.log${RESET} for more info."
-			echo -e "$ERROR If you can't solve the issue yourself, please, open an issue on the GitHub."
+			print_error "An error occurred during installation. Please, refer to ${YELLOW}install_log.log${RESET} for more info."
+			print_error "If you can't solve the issue yourself, please, open an issue on the GitHub."
 			exit 1
 		fi
 	fi
 }
 
+INSTALLED_DESKTOP_FILE=${XDG_DATA_HOME}/applications/photoshop.desktop
 install_icon() {
 	# Papirus Icon Theme already has a Photoshop icon in it.
 	# The script will check if you have Papirus installed and use its icon. If Papirus is not installed, the script will download the icon from the Internet and use it.
@@ -423,28 +427,31 @@ install_icon() {
 	if [ -z "$ICON" ]; then
 		local icon_url="https://cdn3d.iconscout.com/3d/premium/thumb/adobe-photoshop-file-3d-icon-download-in-png-blend-fbx-gltf-formats--logo-format-graphic-design-pack-development-icons-9831950.png"
 		if ! curl "$icon_url" -o "icon.webp" &>>./install_log.log; then
-			echo -e "$ERROR Failed to download icon. Please refer ${YELLOW}install_log.log${RESET} for info."
+			print_error "Failed to download icon. Please refer ${YELLOW}install_log.log${RESET} for info."
 			exit 1
 		fi
 
+    print_log "Changing '.webp' format to '.png'"
 		magick "icon.webp" "icon.png"
+    print_log "Delete './icon.webp'"
 		rm "./icon.webp"
 
-		echo -e "$LOG Installing icon for .desktop entry."
+		print_log "Installing icon for .desktop entry."
 		mv "./icon.png" "$XDG_DATA_HOME/icons/photoshop.png"
 		ICON="$XDG_DATA_HOME/icons/photoshop.png"
 	fi
-	echo "Icon=${ICON}" >>./photoshop.desktop
+
+  print_log "Adding icon '${ICON}' to .desktop file"
+	echo "Icon=${ICON}" >> "${INSTALLED_DESKTOP_FILE}"
 }
 
 install_desktop_entry() {
 	mkdir "$XDG_DATA_HOME/applications" -p
 
-	local path="$XDG_DATA_HOME/applications/photoshop.desktop"
 
 	print_log "Genarating application menu item"
 
-	cp ./photoshop.desktop "${path}"
+	cp ./photoshop.desktop "${INSTALLED_DESKTOP_FILE}"
 }
 
 install_launcher() {
@@ -454,14 +461,14 @@ install_launcher() {
 	print_log "Installing launcher."
 	{
 		echo "#!/usr/bin/env bash"
-		echo " "
+		echo ""
 		echo "WINEPREFIX=\"$WINEPREFIX\""
 		echo "DXVK_LOG_PATH=\"\$WINEPREFIX/dxvk_cache\""
 		echo "DXVK_STATE_CACHE_PATH=\"\$WINEPREFIX/dxvk_cache\""
 		echo "PHOTOSHOP=\"\$WINEPREFIX/drive_c/Program Files/Adobe Photoshop 2021/photoshop.exe\""
-		echo " "
+		echo ""
 		echo "wine64 \"\$PHOTOSHOP\" \"\$@\" "
-	} >"${LAUNCHER}"
+	} > "${LAUNCHER}"
 	chmod +x "$LAUNCHER"
 }
 
@@ -479,8 +486,8 @@ main() {
 		install_photoshop
 	fi
 
-	install_icon
 	install_desktop_entry
+	install_icon
 	install_launcher
 
 	echo -e "$SUCCES Photoshop is successfully installed."
