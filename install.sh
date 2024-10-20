@@ -411,7 +411,7 @@ install_desktop_entry() {
 
 	echo "[Desktop Entry]"                                                                                  >  "$path"
 	echo "Name=Adobe Photoshop CC 2021"                                                                     >> "$path"
-	echo "Exec=bash -c "$HOME/.local/bin/photoshop.sh %F""                                                  >> "$path"
+	echo "Exec=bash -c "$HOME/.local/bin/photoshop/photoshop.sh %F""                                                  >> "$path"
 	echo "Type=Application"                                                                                 >> "$path"
 	echo "Comment=The industry-standard photo editing software (Wine"                                       >> "$path"
 	echo "Categories=Graphics"                                                                              >> "$path"
@@ -436,7 +436,8 @@ install_launcher() {
 		echo "DXVK_STATE_CACHE_PATH=\"\$WINEPREFIX/dxvk_cache\""
 		echo "PHOTOSHOP=\"\$WINEPREFIX/drive_c/Program Files/Adobe Photoshop 2021/photoshop.exe\""
 		echo ""
-		echo "wine64 \"\$PHOTOSHOP\" \"\$@\" "
+		echo "echo -e \"All logs are saved in \$LOG_FILE\""
+		echo "wine64 \"\$PHOTOSHOP\" \"\$@\" \$\"LOG_FILE\" "
 	} > "$LAUNCHER"
 
 	chmod +x "$LAUNCHER"
