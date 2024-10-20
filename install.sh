@@ -237,7 +237,7 @@ download_photoshop() {
 	fi
 
 	echo -e "$LOG Downloading Photoshop (1.1G)."
-	if ! curl --progress-bar "$PHOTOSHOP_URL" -o "$archive_name" 2>> ./install_log.log; then
+	if ! curl --progress-bar "$PHOTOSHOP_URL" -o "$archive_name"; then
 		# TODO:
 		# separate function to avoid repeating
 		echo -e "$ERROR An error occurred during the download. Please, refer to ${YELLOW}install_log.log${RESET} for more info."
