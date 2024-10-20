@@ -42,7 +42,7 @@ PHOTOSHOP_URL="https://spyderrock.com/kMnq2220-AdobePhotoshop2021.xz"
 # sha256 checksum
 CHECKSUM="8321b969161f2d2ad736067320d493c5b6ae579eaab9400cd1fda6871af2c033"
 
-LAUNCHER="$HOME/.local/bin/photoshop.sh"
+LAUNCHER="$HOME/.local/bin/photoshop/photoshop.sh"
 LOCAL_ARCHIVE=""
 ICON=""
 
@@ -54,25 +54,17 @@ on_interrupt() {
 	echo -e "\n$WARNING User intrrupt!"
 
 	if [ -d "$INSTALL_PATH" ]; then
-		while true; do
-			read -p "$(echo -e "$YELLOW")[WARNING]$(echo -e "$RESET") Do you want to $(echo -e "$RED")delete$(echo -e "$RESET") the just created wine prefix? (yes/no): " answer
-
-			case "$answer" in
-				[Yy]es|y)
-					if rm -rf "${INSTALL_PATH:?}"; then
-						exit 0
-					else
-						echo -e "$ERORR The last command ended with an error."
-						exit 1
-					fi
-					;;
-				[Nn]o|n)
-					exit 0
-					;;
-				*)
-					echo -e "$WARNING Invalid input!"
-			esac
-		done
+		if ask_user "Do you want to ${RED}delete ${RESET}your previous installation?"; then
+			if rm -rf "${INSTALL_PATH:?}"; then
+				exit 0
+			else
+				echo -e "$ERORR The last command ended with an error."
+				exit 1
+			fi
+		else
+			echo -e "$LOG Exiting."
+			exit 1
+		fi
 	else
 		exit 1
 	fi
@@ -93,13 +85,13 @@ print_error() {
 # Not used yet
 ask_user() {
 	while true; do
-		read -p "$(echo -e "${WARNING} "$@" (yes/no) : ")" answer
+		read -r -p "$(echo -e "${WARNING} $* (yes/no) : ")" answer
 
 		case "$answer" in
-			[Yy]es|[Yy])
+			[yY]|[yY][eE][sS])
 				return 0
 				;;
-			[Nn]o|[Nn])
+			[nN]|[nN][oO])
 				return 1
 				;;
 
@@ -136,41 +128,34 @@ check_deps() {
 }
 
 install_deps() {
-	local os="$(uname -n)"
+	if [ ! -f /etc/os-release ]; then
+		echo -e "$WARNING Cannot find '${YELLOW}/etc/os-release${RESET}'."
+		exit 1
+	fi
 
-	case "$os" in
-		"archlinux")
+	source /etc/os-release
+
+	# Refer to /etc/os-release for more info
+	case "$ID" in
+		"arch")
 				# To display the list of packages correctly, we need to format the string. 
 				# Otherwise `read` will not display the whole list of packages and will stop in the middle of the line.
 				missing_packages_str=$(printf "%s " "${missed_packages[@]}")
 				# Here we can do without it, but in that case there will be an annoying space before the period at the end of the package listing.
 				missing_packages_str=${missing_packages_str% }
 
-				while true; do
-					# Yeah yeah, I know it's unreadable. 
-					# But it's beautiful!
-					read -p "$(echo -e "$YELLOW")[WARNING]$(echo -e "$RESET") Script will execute: '$(echo -e "$RED")sudo$(echo -e "$RED") $(echo -e "$BLUE")pacman -S $(echo -e "$YELLOW")${missing_packages_str}$(echo -e "$RESET")'. Proceed? (yes/no): " answer
-					
-					case "$answer" in
-						[Yy]es|y)
-							echo -e "$LOG Installing missing dependencies"
-							if ! sudo pacman -S "${missed_packages[@]}"; then
-								echo -e "$ERROR Pacman terminated with an error."
-								exit 1
-							fi
-							
-							echo -e "$LOG Missing dependencies was installed"
-							break
-							;;
-						[Nn]o|n)
-							echo -e "$LOG Exiting"
-							exit 1
-							;;
-						*)
-							echo -e "$WARNING Invalid input!"
-							;;
-					esac
-				done
+				if ask_user "Script will execute: '${RED}sudo ${BLUE}pacman -S ${YELLOW}${missing_packages_str}${RESET}'. Proceed?"; then 
+					echo -e "$LOG Installing missing dependencies"
+					if ! sudo pacman -S "${missed_packages[@]}"; then
+						echo -e "$ERROR Pacman terminated with an error."
+						exit 1
+					else
+						echo -e "$LOG Missing dependencies was installed"
+					fi
+				else
+					echo -e "$LOG Exiting."
+					exit 1
+				fi
 			;;
 		*)
 			echo -e "$ERROR For now only ${BLUE}Arch Linux${RESET} is supported."
@@ -187,30 +172,19 @@ is_path_exists() {
 	if [ -d "$1" ]; then
 		# BUG
 		# echo -e "$WARNING The specified path '$1' already exists."
-		echo -e "$WARNING The specified path already exists."
-	
-		while true; do
-			read -p "$(echo -e "$YELLOW")[WARNING]$(echo -e "$RESET") Do you want to $(echo -e "$RED")delete$(echo -e "$RESET") previous installation? (yes/no): " answer
+		echo -e "$WARNING The specified path '${YELLOW}${1}${RESET}' already exists."
 
-			case "$answer" in
-				[Yy]es|y)
-					if rm -rf "${1:?}"; then
-						echo -e "$LOG Deleted old installation."
-						break
-					else
-						echo -e "$ERROR Something went wrong."
-						exit 1
-					fi
-					;;
-				[Nn]o|n)
-					echo -e "$LOG Exiting."
-					exit 1
-					;;
-				*)
-					echo -e "$WARNING Invalid input!"
-					;;
-			esac
-		done
+		if ask_user "Do you want to delete previous installation?"; then
+			if rm -rf "${1:?}"; then
+				echo -e "$LOG Deleted old installation."
+			else
+				echo -e "$ERROR Something went wrong."
+				exit 1
+			fi
+		else
+			echo -e "$LOG Exiting."
+			exit 1
+		fi
 	fi
 }
 
@@ -221,8 +195,6 @@ setup_wine() {
 	echo -e "$LOG Setting up wine prefix."
 	winecfg /v win10 2> /dev/null
 
-	# echo -e "${LOG_NORMAL}[LOG]${LOG_RESET} Executing winetricks. All winetricks logs are saved in ${LOG_WARNING}./winetricks.log${LOG_RESET}."
-	echo -e "$LOG Executing winetricks."
 	echo -e "$LOG Downloading and installing core components for wine prefix. This could take some time."
 
 	if ! winetricks --unattended corefonts win10 vkd3d dxvk2030 msxml3 msxml6 gdiplus &> ./install_log.log; then
@@ -247,8 +219,8 @@ setup_wine() {
 download_photoshop() {
 	local archive_name="Photoshop.tar.xz"
 
-	if [ -f "$archive_name" ]; then
-		echo -e "$LOG Found existing archive."
+	if [ -f "./${archive_name}" ]; then
+		echo -e "$LOG Found existing archive in current folder."
 		echo -e "$LOG Comparing checksums."
 		# TODO:
 		# separate function to avoid repeating this task
@@ -263,9 +235,9 @@ download_photoshop() {
 
 		return 0
 	fi
-	# echo -e "${LOG_NORMAL}[LOG]${LOG_RESET} Downloading Photoshop (1.1G). Using ${LOG_WARNING}curl${LOG_RESET} as backend. Logs are available in ${LOG_WARNING}./curl.log${LOG_RESET}."
+
 	echo -e "$LOG Downloading Photoshop (1.1G)."
-	if ! curl "$PHOTOSHOP_URL" -o "$archive_name" &>> ./install_log.log; then
+	if ! curl --progress-bar "$PHOTOSHOP_URL" -o "$archive_name" 2>> ./install_log.log; then
 		# TODO:
 		# separate function to avoid repeating
 		echo -e "$ERROR An error occurred during the download. Please, refer to ${YELLOW}install_log.log${RESET} for more info."
@@ -273,8 +245,6 @@ download_photoshop() {
 		exit 1
 	fi
 		
-	echo -e "$LOG Photoshop Downloaded."
-
 	# TODO:
 	# A separate function so you don't have to write this code multiple times
 	echo -e "$LOG Comparing checksums."
@@ -315,13 +285,14 @@ verify_path() {
 	INSTALL_PATH="$path"
 
 	# Remove the last folder from the given path (as it will be created by wineprefix) and check the remaining path for validity.
-	local reformatted_path="$(echo "$path" | sed 's/\/[^\/]*$//')"
+	local reformatted_path
+	reformatted_path="$(echo "$path" | sed 's/\/[^\/]*$//')"
 
 	if [ -d "$reformatted_path" ]; then
 		if [[ "$reformatted_path" == "$HOME" ]]; then
 			return 0
 		else
-			echo -e "$CHECK Directory $reformatted_path exist."
+			echo -e "$CHECK Directory '${YELLOW}${reformatted_path}${RESET}' exist."
 		fi
 	else
 		echo -e "$ERORR Path $reformatted_path does not exist!"
@@ -354,7 +325,7 @@ install_photoshop() {
 			exit 1
 		fi
 	else
-		echo -e "$LOG Using local Photoshop archive."
+		echo -e "$LOG Using given local Photoshop archive."
 
 		if [[ ! "$LOCAL_ARCHIVE" = *.tar.xz ]]; then
 			echo -e "$ERORR Only tar.xz is accepted for now."
@@ -367,7 +338,8 @@ install_photoshop() {
 		# A separate function so you don't have to write this code multiple times
 		echo -e "$LOG Comparing checksums."
 
-		local local_checksum="$(sha256sum "$LOCAL_ARCHIVE" | awk '{print  $1}')"
+		local local_checksum
+		local_checksum="$(sha256sum "$LOCAL_ARCHIVE" | awk '{print  $1}')"
 
 		# TODO:
 		# Allow user to skip checksum comparing
@@ -435,7 +407,7 @@ install_desktop_entry() {
 
 	local path="$XDG_DATA_HOME/applications/photoshop.desktop"
 
-	echo -e "$LOG Genarating application menu item"
+	echo -e "$LOG Genarating application menu item."
 
 	echo "[Desktop Entry]"                                                                                  >  "$path"
 	echo "Name=Adobe Photoshop CC 2021"                                                                     >> "$path"
@@ -450,20 +422,22 @@ install_desktop_entry() {
 
 install_launcher() {
 
-	if [ ! -d "$HOME/.local/bin" ]; then
-		mkdir "$HOME/.local/bin"
-	fi
+	mkdir -p "$HOME/.local/bin/photoshop"
 
 	echo -e "$LOG Installing launcher."
 
-	echo "#!/usr/bin/env bash"                                                                 >  "$LAUNCHER"
-	echo " "                                                                                   >> "$LAUNCHER"
-	echo "WINEPREFIX=\"$WINEPREFIX\""                                                          >> "$LAUNCHER"
-	echo "DXVK_LOG_PATH=\"\$WINEPREFIX/dxvk_cache\""                                           >> "$LAUNCHER"
-	echo "DXVK_STATE_CACHE_PATH=\"\$WINEPREFIX/dxvk_cache\""                                   >> "$LAUNCHER"
-	echo "PHOTOSHOP=\"\$WINEPREFIX/drive_c/Program Files/Adobe Photoshop 2021/photoshop.exe\"" >> "$LAUNCHER"
-	echo " "                                                                                   >> "$LAUNCHER"
-	echo "wine64 \"\$PHOTOSHOP\" \"\$@\" "                                                     >> "$LAUNCHER"
+	# Thanks to Katy248 (https://github.com/Katy248) for the idea.
+	{
+		echo "#!/usr/bin/env bash"
+		echo ""
+		echo "export WINEPREFIX=\"$WINEPREFIX\""
+		echo "LOG_FILE=\"\$HOME/.local/bin/photoshop/latest_log.log\""
+		echo "DXVK_LOG_PATH=\"\$WINEPREFIX/dxvk_cache\""
+		echo "DXVK_STATE_CACHE_PATH=\"\$WINEPREFIX/dxvk_cache\""
+		echo "PHOTOSHOP=\"\$WINEPREFIX/drive_c/Program Files/Adobe Photoshop 2021/photoshop.exe\""
+		echo ""
+		echo "wine64 \"\$PHOTOSHOP\" \"\$@\" "
+	} > "$LAUNCHER"
 
 	chmod +x "$LAUNCHER"
 }
