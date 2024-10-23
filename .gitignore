@@ -2,4 +2,4 @@ uninstall.sh
 install.sh.bak
 install_log.log
 test.sh
-*.tar.xz
+*.tar*

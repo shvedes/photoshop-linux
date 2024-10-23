@@ -6,12 +6,6 @@
 # I am not responsible for any other files downloaded from other links using the script.
 # If the link becomes inactive - it will be replaced by another hosting. Checksums of uploaded files will also be updated.
 
-# TODO
-# - Indicate download progress
-# - Maybe use `aria2` for downloading files?
-# - Multi distro dependencies installer
-# - Implement logging adequately
-
 # In case the user does not use the XDG Base Directory Specification
 # https://specifications.freedesktop.org/basedir-spec/latest
 XDG_DATA_HOME="$HOME/.local/share"
@@ -54,8 +48,8 @@ on_interrupt() {
 	echo -e "\n$WARNING User intrrupt!"
 
 	if [ -d "$INSTALL_PATH" ]; then
-		if ask_user "Do you want to ${RED}delete ${RESET}your previous installation?"; then
-			if rm -rf "${INSTALL_PATH:?}"; then
+		if ask_user "Do you want to ${RED}delete${RESET} a newly created folder?"; then
+			if rm -rfv "${INSTALL_PATH:?}" 2>> ./install_log.log; then
 				exit 0
 			else
 				echo -e "$ERORR The last command ended with an error."
@@ -77,15 +71,9 @@ get_help() {
 	echo "  -h    Show this help"
 }
 
-# soon
-print_error() {
-	command ...
-}
-
-# Not used yet
 ask_user() {
 	while true; do
-		read -r -p "$(echo -e "${WARNING} $* (yes/no) : ")" answer
+		read -r -p "$(echo -e "${WARNING} $* (yes/no): ")" answer
 
 		case "$answer" in
 			[yY]|[yY][eE][sS])
@@ -174,8 +162,8 @@ is_path_exists() {
 		# echo -e "$WARNING The specified path '$1' already exists."
 		echo -e "$WARNING The specified path '${YELLOW}${1}${RESET}' already exists."
 
-		if ask_user "Do you want to delete previous installation?"; then
-			if rm -rf "${1:?}"; then
+		if ask_user "Do you want to ${RED}delete${RESET} previous installation?"; then
+			if rm -rfv "${1:?}" 2>> ./install_log.log; then
 				echo -e "$LOG Deleted old installation."
 			else
 				echo -e "$ERROR Something went wrong."
@@ -203,14 +191,15 @@ setup_wine() {
 		exit 1
 	fi
 
-	echo "---------------------------------------------------------------------" >> ./install_log.log
-	echo "                  Downloading Visual C++ Libraries				   " >> ./install_log.log
-	echo "---------------------------------------------------------------------" >> ./install_log.log
+	{
+		echo "---------------------------------------------------------------------"
+		echo "                  Downloading Visual C++ Libraries				   "
+		echo "---------------------------------------------------------------------"
+	} >> ./install_log.log # Thanks to Katy248 for the idea.
 
 	echo -e "$LOG Downloading and installing Visual C++ libraries."
 	if ! winetricks --unattended "${vc_libraries[@]}" &>> ./install_log.log; then
 		echo -e "$ERROR Winetricks terminated with an error. Please, refer to ${YELLOW}install_log.log${RESET} for more info."
-		# echo -e "${LOG_ERROR}[ERROR]${LOG_RESET} Please open an issue by mentioning the contents of ${LOG_WARNING}./install_log.log${LOG_RESET}."
 		echo -e "$ERROR If you can't solve the issue yourself, please, open an issue on the GitHub."
 		exit 1
 	fi
@@ -421,9 +410,7 @@ install_desktop_entry() {
 }
 
 install_launcher() {
-
 	mkdir -p "$HOME/.local/bin/photoshop"
-
 	echo -e "$LOG Installing launcher."
 
 	# Thanks to Katy248 (https://github.com/Katy248) for the idea.
