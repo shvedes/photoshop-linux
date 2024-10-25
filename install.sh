@@ -269,7 +269,7 @@ verify_path() {
 
 	# Check the validity of the path if the user has specified the absolute path manually. This is necessary in case the user accidentally misspells $HOME paths.
 	# https://github.com/shvedes/photoshop-linux/issues/1
-	if [[ ! "$path" =~ $HOME ]]; then
+	if [[ ! "$path" == "$HOME"* ]]; then
 		echo -e "$ERROR Cannot validade ${YELLOW}\$HOME${RESET} path."
 		exit 1
 	fi
