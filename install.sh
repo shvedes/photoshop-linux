@@ -9,6 +9,7 @@
 # In case the user does not use the XDG Base Directory Specification
 # https://specifications.freedesktop.org/basedir-spec/latest
 XDG_DATA_HOME="$HOME/.local/share"
+XDG_CACHE_HOME="$HOME/.cache"
 
 #                            LOGGING SYSTEM
 # ##################################################################### 
@@ -29,6 +30,10 @@ CHECK="${GREEN}[CHECK]${RESET}"
 #						CHECKS & OTHER FUNCTIONS
 # ################################################################### 
 #
+
+if [ -z "$XDG_DATA_HOME" ] && [ -z "$XDG_CACHE_HOME" ]; then
+	echo -e "$WARNING Please set variables ${YELLOW}XDG_DATA_HOME${RESET}, ${YELLOW}XDG_CACHE_HOME${RESET} and others ${YELLOW}XDG_*${RESET} according to the XDG Base Directory specification."
+fi
 
 # Photoshop URL
 PHOTOSHOP_URL="https://spyderrock.com/kMnq2220-AdobePhotoshop2021.xz"
@@ -418,13 +423,13 @@ install_launcher() {
 		echo "#!/usr/bin/env bash"
 		echo ""
 		echo "export WINEPREFIX=\"$WINEPREFIX\""
-		echo "LOG_FILE=\"\$HOME/.local/bin/photoshop/latest_log.log\""
+		echo "LOG_FILE=\"\$XDG_CACHE_HOME/photoshop.log\""
 		echo "DXVK_LOG_PATH=\"\$WINEPREFIX/dxvk_cache\""
 		echo "DXVK_STATE_CACHE_PATH=\"\$WINEPREFIX/dxvk_cache\""
 		echo "PHOTOSHOP=\"\$WINEPREFIX/drive_c/Program Files/Adobe Photoshop 2021/photoshop.exe\""
 		echo ""
 		echo "echo -e \"All logs are saved in \$LOG_FILE\""
-		echo "wine64 \"\$PHOTOSHOP\" \"\$@\" \$\"LOG_FILE\" "
+		echo "wine64 \"\$PHOTOSHOP\" \"\$@\" &> \"\$LOG_FILE\" "
 	} > "$LAUNCHER"
 
 	chmod +x "$LAUNCHER"
