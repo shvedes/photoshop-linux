@@ -51,3 +51,7 @@ Usage: ./install.sh [options...] <path>
 - [ ] Uninstall script
 - [x] More checks in the install script
 - [x] Ability for the user to select a default installation folder
+
+## Support
+
+Just follow me on GitHub :)
