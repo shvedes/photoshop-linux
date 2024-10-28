@@ -151,20 +151,23 @@ install_deps() {
 # ###################################################################
 #
 
+# $1 - path
 is_path_exists() {
-	if ! [ -d "$1" ]; then
+  local path=$1
+
+	if ! [ -d "${path}" ]; then
 		return
 	fi
 	# BUG
 	# echo -e "$WARNING The specified path '$1' already exists."
-	echo -e "$WARNING The specified path '${YELLOW}${1}${RESET}' already exists."
+	echo -e "$WARNING The specified path '${YELLOW}${path}${RESET}' already exists."
 
 	if ! ask_user "Do you want to ${RED}delete${RESET} previous installation?"; then
 		echo -e "$LOG Exiting."
 		exit 1
 	fi
 
-	if ! rm -rfv "${1:?}" 2>>./install_log.log; then
+	if ! rm -rfv "${path:?}" 2>>./install_log.log; then
 		print_err "Something went wrong."
 	fi
 	echo -e "$LOG Deleted old installation."
