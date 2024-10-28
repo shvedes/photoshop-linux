@@ -96,10 +96,6 @@ ask_user() {
 }
 
 OS_ID=$(source /etc/os-release && echo "${ID}")
-	if ! ask_user "Script will use '${_bold}${RED}sudo${RESET}'. Proceed?"; then
-		echo -e "$LOG Exiting."
-		exit 1
-	fi
 DEPENDENCIES=()
 
 case "${OS_ID}" in
