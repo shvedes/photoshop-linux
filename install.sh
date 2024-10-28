@@ -140,7 +140,6 @@ install_deps() {
     fi
 		;;
   "redos")
-    echo -e "${LOG} RED OS install"
     if ! pkexec dnf install "${DEPENDENCIES[@]}" -y --comment "Installed via 'photoshop-linux' script" ;then 
 			print_err "${_bold}DNF${RESET} terminated with an error."
     fi
