@@ -145,7 +145,7 @@ install_deps() {
     fi
     ;;
 	*)
-		print_err "For now only ${BLUE}Arch Linux${RESET} is supported."
+		print_err "For now only ${BLUE}Arch Linux${RESET} and ${RED}RED OS${RESET} is supported."
 		;;
 	esac
 	echo -e "$LOG Missing dependencies was installed"
