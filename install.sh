@@ -23,7 +23,7 @@ RESET="\e[0m"     # Reset colors
 
 LOG="${BLUE}[LOG]${RESET}"
 WARNING="${YELLOW}[WARNING]${RESET}"
-ERORR="${RED}[ERROR]${RESET}"
+ERROR="${RED}[ERROR]${RESET}"
 SUCCES="${GREEN}[SUCCES]${RESET}"
 CHECK="${GREEN}[CHECK]${RESET}"
 
@@ -116,6 +116,14 @@ case "${OS_ID}" in
 	;;
 esac
 
+# Prints error message and exits with code 1
+# $1 - message
+print_err() {
+  local msg=$1
+  echo -e "${ERROR} ${msg}" >&2
+  exit 1
+}
+
 install_deps() {
 
   _bold=$(tput bold)
@@ -128,19 +136,17 @@ install_deps() {
 		  exit 1
 	  fi
 		if ! sudo pacman -S "${DEPENDENCIES[@]}"; then
-			echo -e "$ERROR Pacman terminated with an error."
-			exit 1
+			print_err "Pacman terminated with an error."
     fi
 		;;
   "redos")
+    echo -e "${LOG} RED OS install"
     if ! pkexec dnf install "${DEPENDENCIES[@]}" -y --comment "Installed via 'photoshop-linux' script" ;then 
-			echo -e "${ERROR} ${_bold}DNF${RESET} terminated with an error." >&2
-			exit 1
+			print_err "${_bold}DNF${RESET} terminated with an error."
     fi
     ;;
 	*)
-		echo -e "$ERROR For now only ${BLUE}Arch Linux${RESET} is supported."
-		exit 1
+		print_err "For now only ${BLUE}Arch Linux${RESET} is supported."
 		;;
 	esac
 	echo -e "$LOG Missing dependencies was installed"
