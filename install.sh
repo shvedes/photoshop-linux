@@ -115,31 +115,31 @@ esac
 # Prints error message and exits with code 1
 # $1 - message
 print_err() {
-  local msg=$1
-  echo -e "${ERROR} ${msg}" >&2
-  exit 1
+	local msg=$1
+	echo -e "${ERROR} ${msg}" >&2
+	exit 1
 }
 
 install_deps() {
 
-  _bold=$(tput bold)
+	_bold=$(tput bold)
 
 	# Refer to /etc/os-release for more info
 	case "${OS_ID}" in
 	"arch")
-	  if ! ask_user "Script will use '${_bold}${RED}sudo${RESET}'. Proceed?"; then
-		  echo -e "$LOG Exiting."
-		  exit 1
-	  fi
+		if ! ask_user "Script will use '${_bold}${RED}sudo${RESET}'. Proceed?"; then
+			echo -e "$LOG Exiting."
+			exit 1
+		fi
 		if ! sudo pacman -S "${DEPENDENCIES[@]}"; then
 			print_err "Pacman terminated with an error."
-    fi
+		fi
 		;;
-  "redos")
-    if ! pkexec dnf install "${DEPENDENCIES[@]}" -y --comment "Installed via 'photoshop-linux' script" ;then 
+	"redos")
+		if ! pkexec dnf install "${DEPENDENCIES[@]}" -y --comment "Installed via 'photoshop-linux' script"; then
 			print_err "${_bold}DNF${RESET} terminated with an error."
-    fi
-    ;;
+		fi
+		;;
 	*)
 		print_err "For now only ${BLUE}Arch Linux${RESET} and ${RED}RED OS${RESET} is supported."
 		;;
@@ -152,23 +152,22 @@ install_deps() {
 #
 
 is_path_exists() {
-	if [ -d "$1" ]; then
-		# BUG
-		# echo -e "$WARNING The specified path '$1' already exists."
-		echo -e "$WARNING The specified path '${YELLOW}${1}${RESET}' already exists."
-
-		if ask_user "Do you want to ${RED}delete${RESET} previous installation?"; then
-			if rm -rfv "${1:?}" 2>>./install_log.log; then
-				echo -e "$LOG Deleted old installation."
-			else
-				echo -e "$ERROR Something went wrong."
-				exit 1
-			fi
-		else
-			echo -e "$LOG Exiting."
-			exit 1
-		fi
+	if ! [ -d "$1" ]; then
+		return
 	fi
+	# BUG
+	# echo -e "$WARNING The specified path '$1' already exists."
+	echo -e "$WARNING The specified path '${YELLOW}${1}${RESET}' already exists."
+
+	if ! ask_user "Do you want to ${RED}delete${RESET} previous installation?"; then
+		echo -e "$LOG Exiting."
+		exit 1
+	fi
+
+	if ! rm -rfv "${1:?}" 2>>./install_log.log; then
+		print_err "Something went wrong."
+	fi
+	echo -e "$LOG Deleted old installation."
 }
 
 setup_wine() {
