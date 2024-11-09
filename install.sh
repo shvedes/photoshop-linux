@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# vim: set tabstop=2 shiftwidth=2 expandtab:
+
 # This work and script was adapted by the work of user LinSoftWin. If it wasn't for him - it wouldn't have happened.
 # This script downloads a PIRATE version of Photoshop, because it is not possible to run the actual version from Adobe Creative Cloud.
 # Use it at your own risk. The license applies only to the files in this repository.
