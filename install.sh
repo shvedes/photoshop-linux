@@ -135,7 +135,7 @@ install_deps() {
 
   # Refer to /etc/os-release for more info
   case "$ID" in
-  "arch")
+  "arch"|"cachyos")
     # To display the list of packages correctly, we need to format the string.
     # Otherwise `read` will not display the whole list of packages and will stop in the middle of the line.
     missing_packages_str=$(printf "%s " "${missed_packages[@]}")
