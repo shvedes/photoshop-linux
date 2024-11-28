@@ -11,7 +11,7 @@ By providing this software, I do not give any guarantees of its work. This scrip
 
 ### What works
 
-- Drag and drop
+- Drag and drop (doesn't work on Hyprland)
 - Clipboard image pasting
 - Mime type association (right click menu, see [here](https://github.com/user-attachments/assets/eb5f7ab3-fb75-47e7-841b-a763ca5e3382))
 - GPU acceleration
@@ -19,7 +19,7 @@ By providing this software, I do not give any guarantees of its work. This scrip
 **Tested on:**
 - Arch Linux / CachyOS
 - KDE Plasma 6.2 (Wayland) / Hyprland
-- wine 9.19+
+- wine 9.19+ / wine-staging 9.20+ / wine-cachyos 9.20+
 - AMD GPU
 
 ### Known issues
