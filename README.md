@@ -17,9 +17,9 @@ By providing this software, I do not give any guarantees of its work. This scrip
 - GPU acceleration
 
 **Tested on:**
-- Arch Linux
-- KDE Plasma 6.2 (Wayland)
-- wine 9.19
+- Arch Linux / CachyOS
+- KDE Plasma 6.2 (Wayland) / Hyprland
+- wine 9.19+
 - AMD GPU
 
 ### Known issues
@@ -42,9 +42,9 @@ Usage: ./install.sh [options...] <path>
 ```
 ## To Do
 
-- [ ] Properly implement logging
-- [ ] Multi distro dependencies installer (for now only Arch Linux is supported)
-- [ ] Create universal functions for repetitive actions
+- [x] Properly implement loging
+- [ ] Multi distro dependencies installer (for now only Arch Linux and CachyOS supported)
+- [x] Create universal functions for repetitive actions
 - [x] Implement colored logging in a different way, making the code more readable
 - [ ] Allow the user to use a different source to download Photoshop
     - [ ] Allow the user to skip checksum verification of downloaded files
