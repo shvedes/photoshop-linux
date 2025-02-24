@@ -4,9 +4,12 @@
 
 By providing this software, I do not give any guarantees of its work. This script was inspired by the work of [LinSoftWin](https://github.com/LinSoftWin/Photoshop-CC2022-Linux). This is only its adaptation. This script will be maintained and developed until I get bored and/or have free time. PR is welcome.
 
+Please note that this code is a piece of garbage. Although it works in most cases, I do not guarantee that it will work completely. Please read the source before using it.
+
 ## Showcase 
 
-![image](https://github.com/user-attachments/assets/5f4edc77-a67e-49c5-8332-b436f1d6134d)
+![install](https://github.com/user-attachments/assets/3a4fb514-360e-4e10-a7a6-793d70b7ca91)
+![delete](https://github.com/user-attachments/assets/0308a1e3-8e9d-4fb0-b7f1-409d7e961891)
 
 ### What works
 
@@ -35,22 +38,11 @@ By providing this software, I do not give any guarantees of its work. This scrip
 ```bash
 ./photoshop.sh
 Usage: ./install.sh [options...] <path>
--a    Use already existing Photoshop.tar.xz
--i    Install Photoshop
--h    Show this help
+  -a                Use already existing Photoshop.tar.xz
+  -i                Install Photoshop
+  -u <install path> Uninstall Photoshop
+  -h                Show this help
 ```
-## To Do
-
-- [x] Properly implement loging
-- [ ] Multi distro dependencies installer (for now only Arch Linux and CachyOS supported)
-- [x] Create universal functions for repetitive actions
-- [x] Implement colored logging in a different way, making the code more readable
-- [ ] Allow the user to use a different source to download Photoshop
-    - [ ] Allow the user to skip checksum verification of downloaded files
-- [ ] Uninstall script
-- [x] More checks in the install script
-- [x] Ability for the user to select a default installation folder
-
 ## Support
 
 Just follow me on GitHub :)

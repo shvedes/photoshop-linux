@@ -28,7 +28,7 @@ RESET="\e[0m"     # Reset colors
 
 LOG="${BLUE}[LOG]${RESET}"
 WARNING="${YELLOW}[WARNING]${RESET}"
-ERORR="${RED}[ERROR]${RESET}"
+ERROR="${RED}[ERROR]${RESET}"
 SUCCES="${GREEN}[SUCCES]${RESET}"
 CHECK="${GREEN}[CHECK]${RESET}"
 
@@ -60,10 +60,10 @@ on_interrupt() {
 
   if [ -d "$INSTALL_PATH" ]; then
     if ask_user "Do you want to ${RED}delete${RESET} a newly created folder?"; then
-      if rm -rfv "${INSTALL_PATH:?}" 2>>./install_log.log; then
+      if rm -rfv "${INSTALL_PATH:?}" &>>./install_log.log; then
         exit 0
       else
-        echo -e "$ERORR The last command ended with an error."
+        echo -e "$ERROR The last command ended with an error."
         exit 1
       fi
     else
@@ -76,10 +76,14 @@ on_interrupt() {
 }
 
 get_help() {
-  echo "Usage: ./install.sh [options...] <absolute path>"
-  echo "  -a    Use already existing Photoshop.tar.xz"
-  echo "  -i    Install Photoshop"
-  echo "  -h    Show this help"
+  echo "Usage: ./install.sh [options...] <path>"
+  echo "  -a                Use already existing Photoshop.tar.xz"
+  echo "  -i                Install Photoshop"
+  echo "  -u <install path> Uninstall Photoshop"
+  echo "  -h                Show this help"
+  echo ""
+  echo "Please familiarize yourself with the script code before using it."
+  echo "I do not guarantee its correct operation. Also, it may contain potentially dangerous functions"
 }
 
 ask_user() {
@@ -87,16 +91,16 @@ ask_user() {
     read -r -p "$(echo -e "${WARNING} $* (yes/no): ")" answer
 
     case "$answer" in
-    [yY] | [yY][eE][sS])
+    [yY]|[yY][eE][sS])
       return 0
       ;;
-    [nN] | [nN][oO])
+
+    [nN]|[nN][oO])
       return 1
       ;;
 
     *)
       echo "Invalid input, try again"
-      ;;
     esac
   done
 }
@@ -201,7 +205,7 @@ setup_wine() {
   echo -e "$LOG Downloading and installing core components for wine prefix. This could take some time."
 
   if ! winetricks --unattended corefonts win10 vkd3d dxvk2030 msxml3 msxml6 gdiplus &>./install_log.log; then
-    echo -e "$ERORR Winetricks terminated with an error."
+    echo -e "$ERROR Winetricks terminated with an error."
     echo -e "$ERROR Please open an issue by mentioning the contents of ${YELLOW}./install_log.log${RESET}."
     exit 1
   fi
@@ -299,7 +303,7 @@ verify_path() {
       echo -e "$CHECK Directory '${YELLOW}${reformatted_path}${RESET}' exist."
     fi
   else
-    echo -e "$ERORR Path $reformatted_path does not exist!"
+    echo -e "$ERROR Path $reformatted_path does not exist!"
     exit 1
   fi
 }
@@ -313,7 +317,7 @@ install_photoshop() {
 
     echo -e "$LOG Extracting Photoshop."
     if ! tar xvf "$filename" &>>./install_log.log; then
-      echo -e "$ERORR An error occurred while unpacking the archive."
+      echo -e "$ERROR An error occurred while unpacking the archive."
       exit 1
       # TODO:
       # A separate function so you don't have to write this code multiple times
@@ -332,7 +336,7 @@ install_photoshop() {
     echo -e "$LOG Using given local Photoshop archive."
 
     if [[ ! "$LOCAL_ARCHIVE" = *.tar.xz ]]; then
-      echo -e "$ERORR Only tar.xz is accepted for now."
+      echo -e "$ERROR Only tar.xz is accepted for now."
       exit 1
       # TODO:
       # Allow user to use not only tar.xz / archive from another sources
@@ -439,11 +443,30 @@ install_launcher() {
     echo "DXVK_STATE_CACHE_PATH=\"\$WINEPREFIX/dxvk_cache\""
     echo "PHOTOSHOP=\"\$WINEPREFIX/drive_c/Program Files/Adobe Photoshop 2021/photoshop.exe\""
     echo ""
-    echo "echo -e \"All logs are saved in \$LOG_FILE\""
+    echo "echo \"All logs are saved in \$LOG_FILE\""
     echo "wine64 \"\$PHOTOSHOP\" \"\$@\" &> \"\$LOG_FILE\" "
   } >"$LAUNCHER"
 
   chmod +x "$LAUNCHER"
+}
+
+uninstall() {
+  if [ -d "$1" ]; then
+    if ask_user "The script will delete '$1'. Continue?"; then
+      echo -e "$LOG Uninstalling old installation."
+      rm -rfv "${1:?}" &>>./uninstall_log.log
+
+      echo -e "$LOG Removing launcher & app icon."
+      [ -d "$HOME/.local/bin/photoshop" ] && rm -rfv $HOME/.local/bin/photoshop &> ./uninstall_log.log
+      [ -f "$XDG_DATA_HOME/applications/photoshop.desktop" ] && rm -rv $XDG_DATA_HOME/applications/photoshop.desktop &> ./uninstall_log.log
+      echo -e "$SUCCES Photoshop was successfully deleted."
+    else
+      exit 1
+    fi
+  else
+    echo -e "$ERROR "$1" does not exist!"
+    exit 1
+  fi
 }
 
 main() {
@@ -466,7 +489,7 @@ main() {
   install_desktop_entry
   install_launcher
 
-  echo -e "$SUCCES Photoshop is successfully installed."
+  echo -e "$SUCCES Photoshop was successfully installed."
 }
 
 if [[ -n $1 && $1 != -* ]]; then
@@ -480,25 +503,20 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-while getopts "a:i:h" opt; do
+while getopts "a:i:u:h" opt; do
   case "$opt" in
   a)
-    LOCAL_ARCHIVE="$OPTARG"
-    ;;
+    LOCAL_ARCHIVE="$OPTARG" ;;
   h)
-    get_help
-    ;;
+    get_help ;;
   i)
-    INSTALL_PATH="$OPTARG"
-    ;;
+    INSTALL_PATH="$OPTARG" ;;
+  u)
+    uninstall "$OPTARG" && exit 0;;
   :)
-    echo "Option -${OPTARG} requires an argument"
-    exit 1
-    ;;
+    echo "Option -${OPTARG} requires an argument" && exit 1 ;;
   ?)
-    echo "Invalid option: -$OPTARG Use -h for help."
-    exit 1
-    ;;
+    echo "Invalid option: -$OPTARG Use -h for help." && exit 1 ;;
   esac
 done
 
