@@ -15,6 +15,7 @@ XDG_DATA_HOME="$HOME/.local/share"
 if [ ! -d "$XDG_CACHE_HOME" ]; then
   XDG_CACHE_HOME="$HOME/.cache"
 fi
+
 #                            LOGGING SYSTEM
 # #####################################################################
 #
@@ -40,6 +41,7 @@ if [ -z "$XDG_DATA_HOME" ] && [ -z "$XDG_CACHE_HOME" ]; then
 fi
 
 # Photoshop URL
+# TODO: change hosting server
 PHOTOSHOP_URL="https://spyderrock.com/kMnq2220-AdobePhotoshop2021.xz"
 
 # sha256 checksum
@@ -103,9 +105,11 @@ ask_user() {
 # One of the functions will load a Photoshop `.webp` icon and convert it to `.png`. The `.png` file will be used in the `.desktop` entry.
 check_deps() {
   declare -A packages=(
-    ["curl"]="curl"
+    ["curl"]="curl" # Usually pre-installed on most distributions
     ["wine"]="wine"
     ["winetricks"]="winetricks"
+
+    # TODO: do not install ImageMagick if the user is using Papirus.
     ["magick"]="imagemagick"
   )
 
@@ -133,6 +137,7 @@ install_deps() {
 
   source /etc/os-release
 
+  # Deprecated. Will not be updated. Still works for listed distros
   # Refer to /etc/os-release for more info
   case "$ID" in
   "arch"|"cachyos")
@@ -424,6 +429,7 @@ install_launcher() {
   echo -e "$LOG Installing launcher."
 
   # Thanks to Katy248 (https://github.com/Katy248) for the idea.
+  # Note: some variables are not used at all; TODO: remove them
   {
     echo "#!/usr/bin/env bash"
     echo ""

@@ -7,19 +7,18 @@ By providing this software, I do not give any guarantees of its work. This scrip
 ## Showcase 
 
 ![image](https://github.com/user-attachments/assets/5f4edc77-a67e-49c5-8332-b436f1d6134d)
-![image](https://github.com/user-attachments/assets/ad8c7477-4682-4edc-8665-4f5b5380a382)
 
 ### What works
 
-- Drag and drop (doesn't work on Hyprland)
+- Drag and drop ~~(doesn't work on Hyprland)~~ (should be fixed with recent update. Not tested)
 - Clipboard image pasting
 - Mime type association (right click menu, see [here](https://github.com/user-attachments/assets/eb5f7ab3-fb75-47e7-841b-a763ca5e3382))
-- GPU acceleration
+- GPU acceleration (no warranty to work)
 
 **Tested on:**
 - Arch Linux / CachyOS
 - KDE Plasma 6.2 (Wayland) / Hyprland
-- wine 9.19+ / wine-staging 9.20+ / wine-cachyos 9.20+
+- wine 9.19+ / wine-staging 9.20+ / ~~wine-cachyos 9.20+~~ window freezes
 - AMD GPU
 
 ### Known issues
@@ -34,7 +33,7 @@ By providing this software, I do not give any guarantees of its work. This scrip
 ## Usage
 
 ```bash
-./install.sh
+./photoshop.sh
 Usage: ./install.sh [options...] <path>
 -a    Use already existing Photoshop.tar.xz
 -i    Install Photoshop
