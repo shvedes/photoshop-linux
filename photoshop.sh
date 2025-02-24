@@ -508,7 +508,7 @@ while getopts "a:i:u:h" opt; do
   a)
     LOCAL_ARCHIVE="$OPTARG" ;;
   h)
-    get_help ;;
+    get_help && exit 0 ;;
   i)
     INSTALL_PATH="$OPTARG" ;;
   u)
@@ -516,7 +516,7 @@ while getopts "a:i:u:h" opt; do
   :)
     echo "Option -${OPTARG} requires an argument" && exit 1 ;;
   ?)
-    echo "Invalid option: -$OPTARG Use -h for help." && exit 1 ;;
+    echo "Invalid option. Use -h for help" && exit 1 ;;
   esac
 done
 
