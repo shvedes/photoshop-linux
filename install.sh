@@ -463,13 +463,19 @@ main() {
   echo -e "$SUCCES Photoshop is successfully installed."
 }
 
-if [[ $# -eq 0 ]]; then
-  get_help
-  exit 0
+if [[ -n $1 && $1 != -* ]]; then
+    echo "Invalid input: options must start with '-'"
+    get_help
+    exit 1
 fi
 
-while getopts "a:i:h" flag; do
-  case $flag in
+if [ -z "$1" ]; then
+    get_help
+    exit 1
+fi
+
+while getopts "a:i:h" opt; do
+  case "$opt" in
   a)
     LOCAL_ARCHIVE="$OPTARG"
     ;;
@@ -479,7 +485,11 @@ while getopts "a:i:h" flag; do
   i)
     INSTALL_PATH="$OPTARG"
     ;;
-  \?)
+  :)
+    echo "Option -${OPTARG} requires an argument"
+    exit 1
+    ;;
+  ?)
     echo "Invalid option: -$OPTARG Use -h for help."
     exit 1
     ;;
