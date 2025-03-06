@@ -112,6 +112,7 @@ check_deps() {
     ["curl"]="curl" # Usually pre-installed on most distributions
     ["wine"]="wine"
     ["winetricks"]="winetricks"
+    ["7z"]="p7zip"
 
     # TODO: do not install ImageMagick if the user is using Papirus.
     ["magick"]="imagemagick"
