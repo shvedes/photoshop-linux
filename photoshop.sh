@@ -107,6 +107,8 @@ ask_user() {
 
 # Imagemagick is needed in case you are not using Papirus Icons.
 # One of the functions will load a Photoshop `.webp` icon and convert it to `.png`. The `.png` file will be used in the `.desktop` entry.
+# Keep in mind, that script will check the installation of icon pack, not an icon pack in use.
+# So if you have Papirus installed, but don't using it, script will not pull an icon from the internet.
 check_deps() {
   declare -A packages=(
     ["curl"]="curl" # Usually pre-installed on most distributions
