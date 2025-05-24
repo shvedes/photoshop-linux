@@ -215,7 +215,7 @@ setup_wine() {
 
   {
     echo "---------------------------------------------------------------------"
-    echo "                  Downloading Visual C++ Libraries				   "
+    echo "                  Downloading Visual C++ Libraries				  "
     echo "---------------------------------------------------------------------"
   } >>./install_log.log # Thanks to Katy248 for the idea.
 
@@ -282,12 +282,14 @@ download_photoshop() {
 }
 
 verify_path() {
-  local path="$1"
+  # test $1, if that fails test $pwd
+  # relative paths are also working now
+  local path="$(realpath "${1:-$(pwd)}")"
 
   # Check the validity of the path if the user has specified the absolute path manually. This is necessary in case the user accidentally misspells $HOME paths.
   # https://github.com/shvedes/photoshop-linux/issues/1
   if [[ ! "$path" == "$HOME"* ]]; then
-    echo -e "$ERROR Cannot validade ${YELLOW}\$HOME${RESET} path."
+    echo -e "$ERROR Cannot validate ${YELLOW}\$HOME${RESET} path."
     exit 1
   fi
 
