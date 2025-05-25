@@ -19,7 +19,7 @@ Please note that this code is a piece of garbage. Although it works in most case
 - GPU acceleration (no warranty to work)
 
 **Tested on:**
-- Arch Linux / CachyOS
+- Arch Linux / CachyOS / NixOS / Linux Mint
 - KDE Plasma 6.2 (Wayland) / Hyprland
 - wine 9.19+ / wine-staging 9.20+ / ~~wine-cachyos 9.20+~~ window freezes
 - AMD GPU
