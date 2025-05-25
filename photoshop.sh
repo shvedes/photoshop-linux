@@ -185,7 +185,7 @@ is_path_exists() {
     echo -e "$WARNING The specified path '${YELLOW}${1}${RESET}' already exists."
 
     if ask_user "Do you want to ${RED}delete${RESET} previous installation?"; then
-      if rm -rfv "${1:?}" 2>>./install_log.log; then
+      if rm -rfv "${1:?}" &>>./install_log.log; then
         echo -e "$LOG Deleted old installation."
       else
         echo -e "$ERROR Something went wrong."
