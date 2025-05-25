@@ -449,7 +449,7 @@ install_launcher() {
     echo "PHOTOSHOP=\"\$WINEPREFIX/drive_c/Program Files/Adobe Photoshop 2021/photoshop.exe\""
     echo ""
     echo "echo \"All logs are saved in \$LOG_FILE\""
-    echo "wine64 \"\$PHOTOSHOP\" \"\$@\" &> \"\$LOG_FILE\" "
+    echo "wine \"\$PHOTOSHOP\" \"\$@\" &> \"\$LOG_FILE\" "
   } >"$LAUNCHER"
 
   chmod +x "$LAUNCHER"
