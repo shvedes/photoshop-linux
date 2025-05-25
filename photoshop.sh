@@ -76,7 +76,7 @@ on_interrupt() {
 }
 
 get_help() {
-  echo "Usage: ./install.sh [options...] <path>"
+  echo "Usage: $0 [options...] <path>"
   echo "  -a                Use already existing Photoshop.tar.xz"
   echo "  -i                Install Photoshop"
   echo "  -u <install path> Uninstall Photoshop"
