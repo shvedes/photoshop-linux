@@ -1,5 +1,10 @@
 # Adobe Photoshop CC 2021 on Linux
 
+## Discontinued
+
+This project is no longer supported because I have lost the desire to maintain it. I remind you that this is not a standalone project, but a wrapper of [this](https://github.com/LinSoftWin/Photoshop-CC2022-Linux) repository, which in turn is maintained and actively updated. If you were a user of my project, please take a look at the work of [LinSoftWin](https://github.com/LinSoftWin).
+
+
 ## Disclaimer
 
 By providing this software, I do not give any guarantees of its work. This script was inspired by the work of [LinSoftWin](https://github.com/LinSoftWin/Photoshop-CC2022-Linux). This is only its adaptation. This script will be maintained and developed until I get bored and/or have free time. PR is welcome.
